@@ -10,13 +10,10 @@ from std_msgs.msg import Bool
 from driver import Driver
 from StateMachine import State
 
-class ArucoDetectionState(State):
+class ArucoDetection(State):
     
-    def __init__(self):
-        self.drive_pub = rospy.Publisher("/Drive/Drive_Command", Drivetrain, queue_size=10)
-        self.steer_pub = rospy.Publisher("/Drive/Steer_Command", Steertrain, queue_size=10)
-        self.enable_sub = rospy.Subscriber("/Auto/Enable", Bool, self.enable_cb)
-        self.thread = threading.Thread(target=self.aruco_detection)
+    def __init__(self, stateMachine):
+        self._stateMachine = stateMachine
         self.enable = False
         self.driveSpeed = 7
         self.lTheta = -45
@@ -58,7 +55,6 @@ class ArucoDetectionState(State):
                 markerIds.append(markerID)
                 markerCorners.append((topLeft, bottomRight))
         return (markerIds, markerLocations, markerCorners)
-    pass
 
     def run(self):
         vs2 = cv2.VideoCapture('rtsp://admin:mavric-camera@192.168.1.64:554/out.h264')
@@ -68,6 +64,18 @@ class ArucoDetectionState(State):
         drive = 0
         steer = 0
         fault = 0
+
+        if __name__ == "__main__":
+            try:
+                rospy.init_node("Aruco")
+                drive_pub = rospy.Publisher("/Drive/Drive_Command", Drivetrain, queue_size=10)
+                steer_pub = rospy.Publisher("/Drive/Steer_Command", Steertrain, queue_size=10)
+                enable_sub = rospy.Subscriber("/Auto/Enable", Bool, self.enable_cb)
+                thread = threading.Thread(target=self.run)
+                thread.start()
+            except rospy.ROSInterruptException:
+                thread._stop()
+                return self._stateMachine.idle
 
         while True:
             ret, frame2 = vs2.read()
@@ -87,16 +95,16 @@ class ArucoDetectionState(State):
 
             if len(angles) > 0:
                 if fault <= 0:
-                    lastFix = time.perf_counter()
+                    self.lastFix = time.perf_counter()
                     fault = 0
                     steer = 100 / (self.rTheta - self.lTheta) * (angles[0] - (self.rTheta + self.lTheta) / 2)
                     drive = self.driveSpeed
                 fault = fault - 1
             else:
-                currentFix = time.perf_counter()
+                self.currentFix = time.perf_counter()
                 fault = fault + 1
                 if fault >= 5:
-                    if currentFix - lastFix > 3:
+                    if self.currentFix - self.lastFix > 3:
                         steer = 0
                         drive = 0
                     elif currentFix - lastFix > 1:
@@ -110,15 +118,11 @@ class ArucoDetectionState(State):
             else:
                 self.drive_pub.publish(0, 0, 0, 0, 0, 0)
                 self.steer_pub.publish(0, 0, 0, 0)
+        return (self.currentFix, self.lastFix)
+        
 
-        vs2.release()
-
-    def next(self, thread):
-        if __name__ == "__main__":
-            try:
-                rospy.init_node("Aruco")
-                aruco_state = ArucoDetectionState()
-                aruco_state.enter()
-                rospy.spin()
-            except rospy.ROSInterruptException:
-                thread._stop()
+    def next(self):
+        if self.currentFix - self.lastFix > 3:
+            return self._stateMachine.idle
+        else:
+            return self.stateMachine.ArucoDetection

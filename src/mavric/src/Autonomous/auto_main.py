@@ -15,13 +15,14 @@ from TurnTowardWaypointState import TurnTowardWaypoint
 from DriveTowardWaypointState import DriveTowardWaypoint
 from ReachedWaypointState import ReachedWaypoint
 from ObjAvoidanceState import ObjAvoidance
+from ArucoDetectionState import ArucoDetection
 
 # define state machine class
 
 
 class AutonomousStateMachine(StateMachine):
     def __init__(self):
-        StateMachine.__init__(self, AutonomousStateMachine.idle)
+        StateMachine.__init__(self, AutonomousStateMachine.ArucoDetection)
 
 
 AutonomousStateMachine.idle = Idle(AutonomousStateMachine)
@@ -29,6 +30,7 @@ AutonomousStateMachine.turnTowardWaypoint = TurnTowardWaypoint(AutonomousStateMa
 AutonomousStateMachine.driveTowardWaypoint = DriveTowardWaypoint(AutonomousStateMachine)
 AutonomousStateMachine.reachedWaypoint = ReachedWaypoint(AutonomousStateMachine)
 AutonomousStateMachine.objAvoidance = ObjAvoidance(AutonomousStateMachine)
+AutonomousStateMachine.ArucoDetection = ArucoDetection(AutonomousStateMachine)
 
 # define functions
 
