@@ -226,6 +226,7 @@ def SR_cb(data):
         ShoulderRot = -100
 
 def SP_cb(data):
+    print("ssdlkjsdlfkdsjf")
     global ShoulderPitch
     ShoulderPitch = data.data
     if ShoulderPitch > 100:

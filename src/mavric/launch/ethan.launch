@@ -1,0 +1,17 @@
+<launch>
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+        <arg name="port" value="9090"/>
+    </include>
+    <arg name="scienceMode" value="false"/>
+    <arg name="driveMode" value="true"/>
+    <arg name="autoMode" value="false"/>
+    <arg name="LoRa_On" value="true" />
+    <include file="$(find mavric)/launch/Drive.launch" pass_all_args="true" />
+    <include file="$(find mavric)/launch/Sensors.launch" />
+    <include file="$(find mavric)/launch/Cameras.launch" />
+    <include file="$(find mavric)/launch/Servos.launch" pass_all_args="true" />
+    <!-- <node name="LoRa_Interface" pkg="mavric" type="900MHz_Interface.py" if='$(arg LoRa_On)'>
+        <remap from="Drive_Train" to="Drive/Drive_Command" />
+        <remap from="Steer_Train" to="Drive/Steer_Command" />
+    </node> -->
+</launch>
